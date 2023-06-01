@@ -3,6 +3,9 @@
 on:
     push:
         branches: [develop]
+
+permissions:
+    contents: write
 jobs:
     release:
       name: release ${{ matrix.target }}
@@ -11,19 +14,31 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - target: x86_64-pc-windows-gnu
-              archive: zip
+            # - target: x86_64-pc-windows-gnu
+            #   archive: zip
             - target: x86_64-unknown-linux-musl
               archive: tar.gz tar.xz tar.zst
-            - target: x86_64-apple-darwin
-              archive: zip
+            # - target: x86_64-apple-darwin
+            #   archive: zip
       steps:
         - uses: actions/checkout@master
-        - name: Compile and release
+        - name: Compile 
           uses: rust-build/rust-build.action@v1.4.3
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             SRC_DIR: trader
+            UPLOAD_MODE: none
           with:
             RUSTTARGET: ${{ matrix.target }}
             ARCHIVE_TYPES: ${{ matrix.archive }}
+        - name: release
+          uses: actions/create-release@v1
+          id: create_release
+          with:
+              draft: false
+              prerelease: false
+              release_name: "test"
+              tag_name: ${{ github.ref }}
+              body_path: CHANGELOG.md
+          env:
+              GITHUB_TOKEN: ${{ github.token }}
